@@ -1,14 +1,12 @@
-import praktikum.ingredient_types
+import praktikum.ingredient_types as ing_types
 from unittest.mock import Mock
-from praktikum.burger import Burger, Bun, Ingredient
-from praktikum.database import Database
-from praktikum.ingredient_types import INGREDIENT_TYPE_SAUCE
+from praktikum.burger import Burger, Bun
+import pytest
 
 class TestBurger:
 
-    @classmethod
-    def setup_method(cls):
-        cls.my_burger = Burger()
+    def setup_method(self):
+        self.my_burger = Burger()
 
     def test_set_buns(self):
         my_bun = Bun('кунжутная', 1266.5)
@@ -49,27 +47,31 @@ class TestBurger:
         self.my_burger.add_ingredient(mock_ingredient)
 
         expected_total = 10*2 + 15.1
+
         assert self.my_burger.get_price() == expected_total
 
-    def test_get_receipt(self):
+    @pytest.mark.parametrize('bun, type, name, price', [
+        ("black bun", ing_types.INGREDIENT_TYPE_SAUCE, "chili sauce", 200),
+        ("white bun", ing_types.INGREDIENT_TYPE_FILLING, "dinosaur", 300)
+        ])
+    def test_get_receipt(self, bun, type, name, price):
 
         mock_bun = Mock()
-        mock_bun.get_name.return_value = "black"
+        mock_bun.get_name.return_value = bun
         self.my_burger.set_buns(mock_bun)
 
-
         mock_ingredient = Mock()
-        mock_ingredient.get_type.return_value = INGREDIENT_TYPE_SAUCE
-        mock_ingredient.get_name.return_value = "chili"
+        mock_ingredient.get_type.return_value = type.lower()
+        mock_ingredient.get_name.return_value = name
         self.my_burger.add_ingredient(mock_ingredient)
   
-        self.my_burger.get_price = Mock(return_value=35.1)
+        self.my_burger.get_price = Mock(return_value=price)
 
         expected_receipt = (
-            "(==== black ====)\n"
-            "= sauce chili =\n"
-            "(==== black ====)\n\n"
-            "Price: 35.1"
+            f"(==== {bun} ====)\n"
+            f"= {type.lower()} {name} =\n"
+            f"(==== {bun} ====)\n\n"
+            f"Price: {price}"
         )
 
         actual_receipt = self.my_burger.get_receipt()
